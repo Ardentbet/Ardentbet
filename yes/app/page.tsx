@@ -1,19 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+declare global {
+  interface Window {
+    Telegram: any;
+  }
+}
+
+const matches = [
+  {
+    id: 1,
+    home: "Real Madrid",
+    away: "Barcelona",
+    odds: [1.85, 3.2, 2.1],
+  },
+  {
+    id: 2,
+    home: "Manchester City",
+    away: "Arsenal",
+    odds: [1.72, 3.5, 2.4],
+  },
+];
 
 export default function Home() {
-  const [coupon, setCoupon] = useState<number[]>([]);
+  const [user, setUser] = useState<any>(null);
+
+  const [coupon, setCoupon] = useState<
+    { match: string; odd: number }[]
+  >([]);
+
   const [amount, setAmount] = useState("");
 
-  function addToCoupon(odd: number) {
-    setCoupon((prev) => [...prev, odd]);
+  useEffect(() => {
+    if (window.Telegram) {
+      const tg = window.Telegram.WebApp;
+
+      tg.expand();
+
+      setUser(tg.initDataUnsafe.user);
+    }
+  }, []);
+
+  function addToCoupon(
+    match: string,
+    odd: number
+  ) {
+    setCoupon((prev) => [
+      ...prev,
+      { match, odd },
+    ]);
+  }
+
+  function removeFromCoupon(index: number) {
+    setCoupon((prev) =>
+      prev.filter((_, i) => i !== index)
+    );
   }
 
   const totalOdds =
     coupon.length > 0
       ? coupon
-          .reduce((acc, odd) => acc * odd, 1)
+          .reduce(
+            (acc, item) => acc * item.odd,
+            1
+          )
           .toFixed(2)
       : "0.00";
 
@@ -23,55 +74,60 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-black text-white p-5">
-      <h1 className="text-3xl font-bold mb-6">
-        Ardentbet
-      </h1>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">
+            GoalPick
+          </h1>
 
-      <div className="bg-zinc-900 p-4 rounded-2xl mb-5">
-        <p className="text-zinc-400">
-          Balance
-        </p>
+          {user && (
+            <p className="text-zinc-400">
+              @{user.username}
+            </p>
+          )}
+        </div>
 
-        <h2 className="text-2xl font-bold">
+        <div className="bg-zinc-900 px-4 py-2 rounded-xl">
           10 000 Coins
-        </h2>
+        </div>
       </div>
 
-      <div className="bg-zinc-900 p-4 rounded-2xl mb-5">
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="font-bold">
-              Real Madrid
-            </p>
+      <div className="space-y-4 mb-5">
+        {matches.map((match) => (
+          <div
+            key={match.id}
+            className="bg-zinc-900 p-4 rounded-2xl"
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="font-bold">
+                  {match.home}
+                </p>
 
-            <p className="font-bold">
-              Barcelona
-            </p>
+                <p className="font-bold">
+                  {match.away}
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                {match.odds.map((odd, index) => (
+                  <button
+                    key={index}
+                    onClick={() =>
+                      addToCoupon(
+                        `${match.home} vs ${match.away}`,
+                        odd
+                      )
+                    }
+                    className="bg-zinc-800 hover:bg-green-500 hover:text-black px-3 py-2 rounded-xl transition"
+                  >
+                    {odd}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => addToCoupon(1.85)}
-              className="bg-zinc-800 px-3 py-2 rounded-xl"
-            >
-              1.85
-            </button>
-
-            <button
-              onClick={() => addToCoupon(3.2)}
-              className="bg-zinc-800 px-3 py-2 rounded-xl"
-            >
-              3.20
-            </button>
-
-            <button
-              onClick={() => addToCoupon(2.1)}
-              className="bg-zinc-800 px-3 py-2 rounded-xl"
-            >
-              2.10
-            </button>
-          </div>
-        </div>
+        ))}
       </div>
 
       <div className="bg-zinc-900 p-4 rounded-2xl">
@@ -85,12 +141,29 @@ export default function Home() {
           </p>
         ) : (
           <div className="space-y-2 mb-4">
-            {coupon.map((odd, index) => (
+            {coupon.map((item, index) => (
               <div
                 key={index}
-                className="bg-zinc-800 p-3 rounded-xl"
+                className="bg-zinc-800 p-3 rounded-xl flex justify-between items-center"
               >
-                Odd: {odd}
+                <div>
+                  <p className="text-sm text-zinc-400">
+                    {item.match}
+                  </p>
+
+                  <p className="font-bold">
+                    Odd: {item.odd}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() =>
+                    removeFromCoupon(index)
+                  }
+                  className="bg-red-500 px-3 py-1 rounded-lg text-sm"
+                >
+                  X
+                </button>
               </div>
             ))}
           </div>
