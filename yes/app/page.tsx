@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 declare global {
   interface Window {
-    Telegram: any;
+    Telegram?: any;
   }
 }
 
@@ -33,12 +33,15 @@ export default function Home() {
   const [amount, setAmount] = useState("");
 
   useEffect(() => {
-    if (window.Telegram) {
-      const tg = window.Telegram.WebApp;
+    const tg = window.Telegram?.WebApp;
 
+    if (tg) {
+      tg.ready();
       tg.expand();
 
-      setUser(tg.initDataUnsafe.user);
+      console.log(tg.initDataUnsafe);
+
+      setUser(tg.initDataUnsafe?.user);
     }
   }, []);
 
@@ -77,12 +80,16 @@ export default function Home() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">
-            <Ardentbet></Ardentbet>
+            Ardentbet
           </h1>
 
-          {user && (
+          {user ? (
             <p className="text-zinc-400">
-              @{user.username}
+              @{user.username || user.first_name}
+            </p>
+          ) : (
+            <p className="text-zinc-500 text-sm">
+              Loading user...
             </p>
           )}
         </div>
