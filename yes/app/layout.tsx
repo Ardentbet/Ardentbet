@@ -1,3 +1,5 @@
+import Script from "next/script";
+
 export const metadata = {
   title: "Ardentbet",
   description: "Telegram Mini App",
@@ -10,11 +12,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <script src="https://telegram.org/js/telegram-web-app.js"></script>
-      </head>
-
-      <body>{children}</body>
+      <head />
+      <body>
+        <Script
+          src="https://telegram.org/js/telegram-web-app.js"
+          strategy="beforeInteractive"
+        />
+        {children}
+      </body>
     </html>
   );
 }
