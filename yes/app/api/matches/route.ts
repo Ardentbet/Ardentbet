@@ -126,43 +126,39 @@ async function loadLeagues() {
 
 export async function GET() {
   try {
-    await loadLeagues();
-
-    const today = new Date().toISOString().split("T")[0].replace(/-/g, "");
+    const today = new Date().toISOString().split("T")[0];
 
     const [liveRes, fixturesRes] = await Promise.all([
       fetch(
-        "https://free-api-live-football-data.p.rapidapi.com/football-current-live",
+        `https://sportapi7.p.rapidapi.com/api/v1/sport/football/scheduled-events/${today}`,
         {
           headers: {
             "Content-Type": "application/json",
             "x-rapidapi-key": RAPIDAPI_KEY,
-            "x-rapidapi-host": "free-api-live-football-data.p.rapidapi.com",
+            "x-rapidapi-host": "sportapi7.p.rapidapi.com",
           },
         }
       ),
       fetch(
-        `https://free-api-live-football-data.p.rapidapi.com/football-get-matches-by-date?date=${today}`,
+        `https://sportapi7.p.rapidapi.com/api/v1/sport/football/events/live`,
         {
           headers: {
             "Content-Type": "application/json",
             "x-rapidapi-key": RAPIDAPI_KEY,
-            "x-rapidapi-host": "free-api-live-football-data.p.rapidapi.com",
+            "x-rapidapi-host": "sportapi7.p.rapidapi.com",
           },
         }
       ),
     ]);
 
-const liveData = await liveRes.json();
-const fixturesData = await fixturesRes.json();
+    const fixturesData = await fixturesRes.json();
+    const liveData = await liveRes.json();
 
-console.log("LIVE STATUS:", liveRes.status);
-console.log("FIXTURES STATUS:", fixturesRes.status);
-console.log("LIVE DATA:", JSON.stringify(liveData).slice(0, 200));
-console.log("FIXTURES DATA:", JSON.stringify(fixturesData).slice(0, 200));
+    console.log("FIXTURES DATA:", JSON.stringify(fixturesData).slice(0, 300));
+    console.log("LIVE DATA:", JSON.stringify(liveData).slice(0, 300));
 
-    const liveEvents = liveData?.response?.live || [];
-    const fixtureEvents = fixturesData?.response?.matches || [];
+    const fixtureEvents = fixturesData?.events || [];
+    const liveEvents = liveData?.events || [];
 
     const allEvents = [
       ...liveEvents.map((e: any) => ({ ...e, isLive: true })),
@@ -170,19 +166,25 @@ console.log("FIXTURES DATA:", JSON.stringify(fixturesData).slice(0, 200));
     ];
 
     const matches = allEvents.slice(0, 50).map((e: any) => {
+      const ruCountry = e.tournament?.category?.fieldTranslations?.nameTranslation?.ru;
+      const ruLeague = e.tournament?.fieldTranslations?.nameTranslation?.ru;
+      const ruHome = e.homeTeam?.fieldTranslations?.nameTranslation?.ru;
+      const ruAway = e.awayTeam?.fieldTranslations?.nameTranslation?.ru;
       const leagueInfo = leagueCache[e.leagueId] || {};
-      const rawLeague = leagueInfo.name || "";
-      const rawCountry = leagueInfo.country || "INT";
 
       return {
         id: e.id || Math.random(),
-        home: e.home?.name || e.homeTeam?.name || "Команда 1",
-        away: e.away?.name || e.awayTeam?.name || "Команда 2",
-        homeScore: e.home?.score ?? null,
-        awayScore: e.away?.score ?? null,
-        time: e.time ? e.time.slice(11, 16) : "—",
-        league: translateLeague(rawLeague) || "Товарищеские матчи",
-        country: translateCountry(rawCountry),
+        home: ruHome || e.homeTeam?.name || "Команда 1",
+        away: ruAway || e.awayTeam?.name || "Команда 2",
+        homeScore: e.homeScore?.current ?? null,
+        awayScore: e.awayScore?.current ?? null,
+        time: e.startTimestamp
+          ? new Date(e.startTimestamp * 1000).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })
+          : "—",
+        league: ruLeague || e.tournament?.name || translateLeague(leagueInfo.name || "") || "Лига",
+        country: ruCountry
+          ? `🌍 ${ruCountry}`
+          : translateCountry(e.tournament?.category?.alpha2 || leagueInfo.country || "INT"),
         status: e.isLive ? "LIVE" : "upcoming",
         odds: {
           home: randomOdds(),
