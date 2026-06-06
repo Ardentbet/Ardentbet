@@ -188,8 +188,8 @@ export async function GET() {
     });
 
     return NextResponse.json({ matches });
-  } catch (e) {
+  } catch (e: any) {
     console.log("Error:", e);
-    return NextResponse.json({ matches: [] });
+    return NextResponse.json({ matches: [], error: String(e) });
   }
 }
