@@ -1,6 +1,8 @@
+﻿import type { Metadata } from "next";
+import "./globals.css";
 import Script from "next/script";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Ardentbet",
   description: "Telegram Mini App",
 };
@@ -11,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="ru">
       <head />
       <body>
         <Script
