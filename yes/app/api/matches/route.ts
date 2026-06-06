@@ -153,8 +153,13 @@ export async function GET() {
       ),
     ]);
 
-    const liveData = await liveRes.json();
-    const fixturesData = await fixturesRes.json();
+const liveData = await liveRes.json();
+const fixturesData = await fixturesRes.json();
+
+console.log("LIVE STATUS:", liveRes.status);
+console.log("FIXTURES STATUS:", fixturesRes.status);
+console.log("LIVE DATA:", JSON.stringify(liveData).slice(0, 200));
+console.log("FIXTURES DATA:", JSON.stringify(fixturesData).slice(0, 200));
 
     const liveEvents = liveData?.response?.live || [];
     const fixtureEvents = fixturesData?.response?.matches || [];
